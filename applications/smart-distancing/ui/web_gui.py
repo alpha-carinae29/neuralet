@@ -32,6 +32,13 @@ class WebGUI:
         self.__ENGINE_INSTANCE = engine_instance
         self._output_frame = None
         self._birds_view = None
+        self._fourcc_vid = cv.VideoWriter_fourcc(*'MJPG')
+        self._fourcc_bird = cv.VideoWriter_fourcc(*'MP4V')
+        resolution = [int(i) for i in self.config.get_section_dict('App')['Resolution'].split(',')]
+        out_width = resolution[0]
+        out_height = resolution[1]
+        self._output_cap_vid = cv.VideoWriter("/repo/applications/smart-distancing/data/out.mp4",self._fourcc_vid, 20.0, (out_width, out_height))
+        self._output_cap_bird = cv.VideoWriter("/repo/applications/smart-distancing/data/bird.mp4",self._fourcc_bird, 20.0, (300, 200))
         self._lock = threading.Lock()
         self._host = self.config.get_section_dict("App")["Host"]
         self._port = int(self.config.get_section_dict("App")["Port"])
@@ -103,6 +110,8 @@ class WebGUI:
         with self._lock:
             self._output_frame = input_frame.copy()
             self._birds_view = birds_eye_window.copy()
+            self._output_cap_vid.write(self._output_frame)
+            self._output_cap_bird.write(self._birds_view)
 
     def create_flask_app(self):
         # Create and return a flask instance named 'app'
