@@ -407,6 +407,7 @@ def visualization_preparation(nn_out, distances, dist_threshold):
     detection_classes = []
     detection_scores = []
     detection_boxes = []
+    is_violating = []
     colors = []
     
     distance = np.amin(distances + np.identity(len(distances)) * dist_threshold * 2, 0)
@@ -433,11 +434,36 @@ def visualization_preparation(nn_out, distances, dist_threshold):
         detection_scores.append(score)
         detection_boxes.append(box)
         colors.append(color)
+        is_violating.append(True) if distance[i] < dist_threshold else is_violating.append(False)
     output_dict["detection_boxes"] = np.array(detection_boxes)
     output_dict["detection_scores"] = detection_scores
     output_dict["detection_classes"] = detection_classes
+    output_dict["violating_objects"] = is_violating
     output_dict["detection_colors"] = colors
     return output_dict
+
+
+def birds_eye_view(input_frame, boxes, is_violating):
+    """
+    This function receives a black window and draw circles (based on boxes) at the frame.
+    Args:
+        input_frame: uint8 numpy array with shape (img_height, img_width, 3)
+        boxes: A numpy array of shape [N, 4]
+        is_violating: List of boolean (True/False) which indicates the correspond object at boxes is
+        a violating object or not
+
+    Returns:
+        input_frame: Frame with red and green circles
+
+    """
+    h, w = input_frame.shape[0:2]
+    for i, box in enumerate(boxes):
+        center_x = int((box[0] * w + box[2] * w) / 2)
+        center_y = int((box[1] * h + box[3] * h) / 2)
+        center_coordinates = (center_x, center_y)
+        color = (0, 0, 255) if is_violating[i] else (0, 255, 0)
+        input_frame = cv.circle(input_frame, center_coordinates, 2, color, 2)
+    return input_frame
 
 
 def text_putter(input_frame, txt, origin, fontscale=0.75, color=(255, 0, 20), thickness=2):
