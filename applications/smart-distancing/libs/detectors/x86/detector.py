@@ -19,6 +19,9 @@ class Detector:
         elif self.name == "openvino":
             from libs.detectors.x86 import openvino
             self.net = openvino.Detector(self.config)
+        elif self.name == "iterdet_crowd":
+            from libs.detectors.x86 import iterdet_crowd
+            self.net = iterdet_crowd.Detector(self.config)
         else:
             raise ValueError('Not supported network named: ', self.name)
 
