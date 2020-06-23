@@ -8,7 +8,7 @@ import os
 import wget
 
 
-def load_model():
+def load_model(gpu):
     base_path = "libs/detectors/x86/data/"
     config_file = os.path.join(base_path, "crowd_human_full_faster_rcnn_r50_fpn_2x.py")
     if not os.path.isfile(config_file):
@@ -21,9 +21,12 @@ def load_model():
         url = "https://github.com/saic-vul/iterdet/releases/download/v2.0.0/crowd_human_full_faster_rcnn_r50_fpn_2x.pth"
         print('checkpoint file does not exist under: ', checkpoint_file, 'downloading from ', url)
         wget.download(url, checkpoint_file)
-
+    if gpu == "true":
+        device = "cuda:0"
+    else:
+        device = "cpu"
     # build the model from a config file and a checkpoint file
-    model = init_detector(config_file, checkpoint_file, device='cuda:0') 
+    model = init_detector(config_file, checkpoint_file, device=device) 
 
     return model
 
@@ -43,8 +46,8 @@ class Detector:
         self.model_name = self.config.get_section_dict('Detector')['Name']
         # Frames Per Second
         self.fps = None
-
-        self.detection_model = load_model()
+        gpu = self.config.get_section_dict('Detector')['GPU']
+        self.detection_model = load_model(gpu)
         self.w , self.h, _ = [int(i) for i in self.config.get_section_dict('Detector')['ImageSize'].split(',')]
     def inference(self, resized_rgb_image):
         """
