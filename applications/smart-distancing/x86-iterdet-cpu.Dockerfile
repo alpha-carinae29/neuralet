@@ -10,6 +10,7 @@ RUN pip install -r requirements/build.txt
 RUN pip install "git+https://github.com/open-mmlab/cocoapi.git#subdirectory=pycocotools"
 RUN pip install -e .
 
+RUN tabs 4 && awk 'NR==35 {$0="        checkpoint = load_checkpoint(model, checkpoint, map_location=torch.device(device))"} 1' mmdet/apis/inference.py > /tmp/inference.py && cp /tmp/inference.py mmdet/apis/inference.py
 
 VOLUME  /repo
 WORKDIR /repo/applications/smart-distancing
