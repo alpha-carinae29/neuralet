@@ -71,6 +71,9 @@ class Distancing:
             obj["bboxReal"]=[x0*w,y0*h,x1*w,y1*h]
  
         objects_list, distancings = self.calculate_distancing(tmp_objects_list)
+        anonymize = self.config.get_section_dict('PostProcessor')['Anonymize']
+        if anonymize == "true":
+            cv_image = self.anonymize_image(cv_image, objects_list)
         return cv_image, objects_list, distancings
 
     def process_video(self, video_uri):
@@ -99,6 +102,19 @@ class Distancing:
         cv_image = cv.imread(image_path)
         cv_image, objects, distancings = self.__process(cv_image)
         self.ui.update(cv_image, objects, distancings)
+
+    def anonymize_image(self, img, objects_list):
+        h ,w = img.shape[:2]
+        for box in objects_list:
+            xmin = max(int(box["bboxReal"][0]), 0)
+            xmax = min(int(box["bboxReal"][2]), w)
+            ymin = max(int(box["bboxReal"][1]), 0)
+            ymax = min(int(box["bboxReal"][3]), h)
+            ymax = (ymax- ymin) // 3 + ymin
+            roi = img[ymin:ymax, xmin:xmax]
+            roi = anonymize_face_simple(roi)
+            img[ymin:ymax, xmin:xmax] = roi
+        return img
 
     def calculate_distancing(self, objects_list):
         """
@@ -291,4 +307,18 @@ class Distancing:
         return distances_asarray
 
 
-
+def anonymize_face_simple(image, factor=3.0):
+        # automatically determine the size of the blurring kernel based
+        # on the spatial dimensions of the input image
+        (h, w) = image.shape[:2] 
+        kW = int(w / factor)
+        kH = int(h / factor)
+        # ensure the width of the kernel is odd 
+        if kW % 2 == 0:
+                kW -= 1
+        # ensure the height of the kernel is odd
+        if kH % 2 == 0:
+                kH -= 1
+        # apply a Gaussian blur to the input image using our computed
+        # kernel size
+        return cv.GaussianBlur(image, (kW, kH), 0)
