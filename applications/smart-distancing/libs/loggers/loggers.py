@@ -16,11 +16,15 @@ class Logger:
         self.config = config
         # Logger name, at this time only csv_logger is supported. You can implement your own logger
         # by following csv_logger implementation as an example.
+        self.fps = int(self.config.get_section_dict("Logger")["Fps"])
+        self.frame_number = 0
         self.name = self.config.get_section_dict("Logger")["Name"]
         if self.name == "csv_logger":
             from . import csv_processed_logger
             self.logger = csv_processed_logger.Logger(self.config)
-
+        if self.name == "csv_logger_raw":
+            from . import csv_logger
+            self.logger = csv_logger.Logger(self.config)
             # For Logger instance from loggers/csv_logger
             # region csv_logger
             # from . import csv_logger
@@ -43,13 +47,8 @@ class Logger:
             objects_list: a list of dictionary where each dictionary stores information of an object (person) in a frame.
             distances: a 2-d numpy array that stores distance between each pair of objects.
         """
-
-        if time.time() - self.submited_time > self.time_interval:
-            self.logger.update(objects_list, distances)
-            self.submited_time = time.time()
-            # For Logger instance from loggers/csv_logger
-            # region
-            # self.logger.update(self.frame_number, objects_list, distances)
-            # self.frame_number += 1
-            # end region
-
+        if int(self.frame_number % (self.fps * self.time_interval - 0.001)) == 0:
+            self.logger.update(self.frame_number, objects_list, distances)
+            self.frame_number += 1
+        else:
+            self.frame_number += 1
