@@ -8,17 +8,26 @@ import os
 import wget
 
 
-def load_model(gpu):
+def load_model(gpu, checkpoint):
     base_path = "libs/detectors/x86/data/"
-    config_file = os.path.join(base_path, "crowd_human_full_faster_rcnn_r50_fpn_2x.py")
+    if checkpoint == "crowd_human":
+        config_name = "crowd_human_full_faster_rcnn_r50_fpn_2x.py"
+        checkpoint_name = "crowd_human_full_faster_rcnn_r50_fpn_2x.pth"
+    elif checkpoint == "wider_person":
+        config_name = "wider_person_faster_rcnn_r50_fpn_2x.py"
+        checkpoint_name = "wider_person_faster_rcnn_r50_fpn_2x.pth"
+    else:
+        raise ValueError("checkpoints should be either 'crowd_human' or 'wider_person' but {} provided".format(checkpoint))
+
+    config_file = os.path.join(base_path, config_name)
     if not os.path.isfile(config_file):
-        url = "https://raw.githubusercontent.com/saic-vul/iterdet/master/configs/iterdet/crowd_human_full_faster_rcnn_r50_fpn_2x.py" 
+        url = "https://raw.githubusercontent.com/saic-vul/iterdet/master/configs/iterdet/" + config_name
         print('config file does not exist under: ', config_file, 'downloading from ', url)
         wget.download(url, config_file)
 
-    checkpoint_file = os.path.join(base_path, "crowd_human_full_faster_rcnn_r50_fpn_2x.pth")
+    checkpoint_file = os.path.join(base_path, checkpoint_name)
     if not os.path.isfile(checkpoint_file):
-        url = "https://github.com/saic-vul/iterdet/releases/download/v2.0.0/crowd_human_full_faster_rcnn_r50_fpn_2x.pth"
+        url = "https://github.com/saic-vul/iterdet/releases/download/v2.0.0/" + checkpoint_name
         print('checkpoint file does not exist under: ', checkpoint_file, 'downloading from ', url)
         wget.download(url, checkpoint_file)
     if gpu == "true":
@@ -47,7 +56,8 @@ class Detector:
         # Frames Per Second
         self.fps = None
         gpu = self.config.get_section_dict('Detector')['GPU']
-        self.detection_model = load_model(gpu)
+        checkpoint = self.config.get_section_dict('Detector')['Checkpoint']
+        self.detection_model = load_model(gpu, checkpoint)
         self.w , self.h, _ = [int(i) for i in self.config.get_section_dict('Detector')['ImageSize'].split(',')]
     def inference(self, resized_rgb_image):
         """
