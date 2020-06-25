@@ -22,6 +22,9 @@ class Detector:
         elif self.name == "iterdet_crowd":
             from libs.detectors.x86 import iterdet_crowd
             self.net = iterdet_crowd.Detector(self.config)
+        elif self.name == "faster_rcnn_nas":
+            from libs.detectors.x86 import faster_rcnn_nas
+            self.net = faster_rcnn_nas.Detector(self.config)
         else:
             raise ValueError('Not supported network named: ', self.name)
 
